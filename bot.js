@@ -1,9 +1,10 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Store conversation history per user
 const conversations = {};
@@ -16,21 +17,16 @@ bot.on('message', async (msg) => {
 
   if (!conversations[chatId]) conversations[chatId] = [];
 
-  conversations[chatId].push({ role: 'user', content: userMessage });
+  conversations[chatId].push({ role: 'user', parts: [{ text: userMessage }] });
 
   try {
     bot.sendChatAction(chatId, 'typing');
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      system: 'You are a helpful assistant.',
-      messages: conversations[chatId],
-    });
+    const chat = model.startChat({ history: conversations[chatId].slice(0, -1) });
+    const result = await chat.sendMessage(userMessage);
+    const reply = result.response.text();
 
-    const reply = response.content[0].text;
-
-    conversations[chatId].push({ role: 'assistant', content: reply });
+    conversations[chatId].push({ role: 'model', parts: [{ text: reply }] });
 
     bot.sendMessage(chatId, reply);
   } catch (error) {
