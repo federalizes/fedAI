@@ -1,14 +1,14 @@
 {
   "name": "fed-ai-bot",
   "version": "1.0.0",
-  "description": "Telegram bot powered by Claude AI",
+  "description": "Telegram bot powered by Gemini AI",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
     "node-telegram-bot-api": "^0.64.0",
-    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/generative-ai": "^0.21.0",
     "dotenv": "^16.0.0"
   }
 }
